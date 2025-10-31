@@ -1,16 +1,22 @@
 # restful-api
 
-To install dependencies:
+## API Test Commands
 
-```bash
-bun install
-```
+`Base URL: http://localhost:3000`
 
-To run:
+## GET all books
 
-```bash
-bun run index.ts
-```
+`curl http://localhost:3000/books`
 
-This project was created using `bun init` in bun v1.2.21. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
-# RESTful-Api-With-Hono-api-Bun
+## POST create book
+
+` curl -X POST http://localhost:3000/books \ -H "Content-Type: application/json" \ -d '{"title":"Atomic Habits","author":"James Clear","year":2018}' `
+
+
+## PUT update book
+
+` curl -X PUT http://localhost:3000/books/1 \ -H "Content-Type: application/json" \ -d '{"title":"Atomic Habits (Updated)"}'`
+
+## DELETE book
+
+` curl -X DELETE http://localhost:3000/books/1`
