@@ -1,29 +1,36 @@
-export const ERROR_CODES = {
-    VALIDATION_ERROR: "VALIDATION_ERROR",
-    NOT_FOUND: "NOT_FOUND",
-    DATABASE_ERROR: "DATABASE_ERROR",
-    UNKNOWN_ERROR: "UNKNOWN_ERROR",
-  } as const;
-  
-  export type Err = {
-    code: string;
-    message: string;
-    detail?: string;
-  };
-  
-  type Success<T> = { data: T; error?: undefined };
-  type Failure<E> = { data?: undefined; error: E };
-  export type Result<T, E = Err> = Success<T> | Failure<E>;
-  
-  export async function tryCatch<T>(
-    promise: Promise<T>,
-    err: Err
-  ): Promise<Result<T, Err>> {
-    try {
-      const data = await promise;
-      return { data };
-    } catch {
-      return { error: err };
-    }
+export enum ERROR_CODES {
+  DATABASE_ERROR = 'DB_ERROR',
+  VALIDATION_ERROR = 'VALIDATION_ERROR',
+  NOT_FOUND = 'NOT_FOUND',
+  CONFLICT = 'CONFLICT'
+}
+
+export interface ErrorResponse {
+  message: string;
+  code: ERROR_CODES;
+  description?: string;
+  detail?: string;
+}
+
+export type Result<T> = 
+  | { data: T; error?: never }
+  | { error: ErrorResponse; data?: never };
+
+export async function tryCatch<T>(
+  promise: Promise<T>, 
+  errorConfig?: Partial<ErrorResponse>
+): Promise<{ data?: T; error?: ErrorResponse }> {
+  try {
+    const data = await promise;
+    return { data };
+  } catch (err) {
+    return { 
+      error: {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        code: errorConfig?.code || ERROR_CODES.DATABASE_ERROR,
+        description: errorConfig?.description,
+        detail: errorConfig?.detail
+      }
+    };
   }
-  
+}

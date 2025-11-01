@@ -1,6 +1,9 @@
-import { Database } from "bun:sqlite";
+import { Database } from 'bun:sqlite';
+import path from 'path';
 
-const db = new Database("data/db.sqlite");
+const dbPath = path.resolve('./data/db.sqlite');
+
+const db = new Database(dbPath, { create: true });
 
 db.run(`
   CREATE TABLE IF NOT EXISTS books (
@@ -8,7 +11,7 @@ db.run(`
     title TEXT NOT NULL,
     author TEXT NOT NULL,
     year INTEGER,
-    createdAt TEXT DEFAULT (datetime('now'))
+    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
 
