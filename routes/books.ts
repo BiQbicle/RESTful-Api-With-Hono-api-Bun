@@ -1,48 +1,40 @@
 import { Hono } from 'hono';
 import { BookSchema, PartialBookSchema } from '../validators/bookValidator';
 import { BookRepository } from '../repositories/book.repositories';
+import { ERROR_CODES } from '../utils/result';
 
 const app = new Hono();
 const bookRepository = new BookRepository();
 
 app.get('/books', (c) => {
   const result = bookRepository.findAll();
-  
-  return result.error 
-    ? c.json(result, 500)
-    : c.json(result.data, 200);
+  return c.json(result);
 });
 
 app.get('/books/:id', (c) => {
   const id = Number(c.req.param('id'));
   const result = bookRepository.findById(id);
-  
-  return result.error
-    ? c.json(result.error, 404)
-    : result.data
-      ? c.json(result.data, 200)
-      : c.json({ message: 'Book not found' }, 404);
+  return c.json(result);
 });
 
 app.post('/books', async (c) => {
   const body = await c.req.json();
-  
   const validation = BookSchema.safeParse(body);
+  
   if (!validation.success) {
     return c.json({
       error: {
-        code: 'VALIDATION_ERROR',
+        code: ERROR_CODES.VALIDATION_ERROR,
         message: 'Invalid book data',
-        details: validation.error.errors
+        description: 'The provided book data did not pass validation',
+        detail: validation.error.errors.map(e => e.message).join(', '),
+        actionable: true
       }
     }, 400);
   }
 
   const result = bookRepository.create(validation.data);
-  
-  return result.error
-    ? c.json(result.error, 409)
-    : c.json(result.data, 201);
+  return c.json(result);
 });
 
 app.put('/books/:id', async (c) => {
@@ -53,28 +45,27 @@ app.put('/books/:id', async (c) => {
   if (!validation.success) {
     return c.json({
       error: {
-        code: 'VALIDATION_ERROR',
+        code: ERROR_CODES.VALIDATION_ERROR,
         message: 'Invalid book data',
-        details: validation.error.errors
+        description: 'The provided book data did not pass validation',
+        detail: validation.error.errors.map(e => e.message).join(', '),
+        actionable: true
       }
     }, 400);
   }
 
   const result = bookRepository.update(id, validation.data);
-  
-  return result.error
-    ? c.json(result.error, 404)
-    : result.data
-      ? c.json(result.data, 200)
-      : c.json({ message: 'Book not found' }, 404);
+  return c.json(result);
 });
 
 app.delete('/books/:id', (c) => {
   const id = Number(c.req.param('id'));
   const result = bookRepository.delete(id);
   
-  return result.error
-    ? c.json(result.error, 404)
-    : c.json({ message: 'Book deleted successfully' }, 200);
+  if (!result.error) {
+    return c.body(null, 204);
+  }
+  return c.json(result);
 });
+
 export default app;
